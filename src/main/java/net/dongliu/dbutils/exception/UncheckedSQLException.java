@@ -6,6 +6,8 @@ import java.sql.SQLException;
  * @author Liu Dong
  */
 public class UncheckedSQLException extends RuntimeException {
+    private static final long serialVersionUID = 7068173044204809643L;
+
     public UncheckedSQLException() {
     }
 

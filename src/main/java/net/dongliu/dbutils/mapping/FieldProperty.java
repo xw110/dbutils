@@ -2,7 +2,6 @@ package net.dongliu.dbutils.mapping;
 
 import net.dongliu.dbutils.exception.ReflectionException;
 
-import javax.annotation.Nullable;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -42,7 +41,7 @@ public class FieldProperty implements Property {
     }
 
     @Override
-    public void set(Object bean, @Nullable Object value) {
+    public void set(Object bean, Object value) {
         try {
             field().set(bean, value);
         } catch (IllegalAccessException e) {
@@ -50,7 +49,6 @@ public class FieldProperty implements Property {
         }
     }
 
-    @Nullable
     @Override
     public Object get(Object bean) {
         try {

@@ -58,7 +58,7 @@ public class TransactionContext extends SQLExecutor {
      */
     private void restoreConnection() {
         try (Connection c = connection) {
-            connection.setAutoCommit(autoCommit);
+            c.setAutoCommit(autoCommit);
         } catch (SQLException e) {
             throw new UncheckedSQLException(e);
         }

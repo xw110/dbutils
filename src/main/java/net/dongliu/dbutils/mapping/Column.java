@@ -7,8 +7,8 @@ import java.lang.annotation.Target;
 
 /**
  * Used to mark column name of bean property, when map result set to bean.
- * This annotation can be set on only getter or setter.
- * If Both Getter and Setter are annotated, they should use the same name
+ * This annotation can be set on field, getter or setter.
+ * If multi annotations are set for one property, which one is used is undetermined.
  *
  * @author Liu Dong
  */

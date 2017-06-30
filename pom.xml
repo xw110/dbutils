@@ -7,8 +7,8 @@
     <artifactId>dbutils</artifactId>
     <name>Database Utils</name>
     <packaging>jar</packaging>
-    <version>3.4.0</version>
-    <url>https://github.com/caoqianli/dbutils</url>
+    <version>4.0.0</version>
+    <url>https://github.com/hsiafan/dbutils</url>
 
     <parent>
         <groupId>org.sonatype.oss</groupId>
@@ -34,7 +34,7 @@
     <licenses>
         <license>
             <name>The BSD 2-Clause License</name>
-            <url>https://github.com/caoqianli/dbutils/blob/master/LICENSE</url>
+            <url>https://github.com/hsiafan/dbutils/blob/master/LICENSE</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -46,24 +46,18 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.1</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.derby</groupId>
+            <artifactId>derby</artifactId>
+            <version>10.13.1.1</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

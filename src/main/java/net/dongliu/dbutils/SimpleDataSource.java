@@ -3,7 +3,6 @@ package net.dongliu.dbutils;
 
 import net.dongliu.dbutils.exception.UncheckedSQLException;
 
-import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.*;
@@ -15,7 +14,7 @@ import java.util.logging.Logger;
  *
  * @author Liu Dong
  */
-public class SimpleDataSource implements DataSource {
+class SimpleDataSource implements DataSource {
 
     private final String jdbcUrl;
     private final String user;
@@ -66,7 +65,7 @@ public class SimpleDataSource implements DataSource {
     }
 
     @Override
-    public Connection getConnection(@Nullable String user, @Nullable String password) throws SQLException {
+    public Connection getConnection(String user, String password) throws SQLException {
         Properties info = new Properties();
         if (user != null) {
             info.put("user", user);

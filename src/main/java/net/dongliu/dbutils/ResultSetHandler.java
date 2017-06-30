@@ -16,7 +16,6 @@
  */
 package net.dongliu.dbutils;
 
-import javax.annotation.Nullable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -38,7 +37,6 @@ public interface ResultSetHandler<T> {
      * ResultSet contained 0 rows.
      * @throws SQLException if a database access error occurs
      */
-    @Nullable
     T handle(ResultSet rs) throws SQLException;
 
 }

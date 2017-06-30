@@ -2,7 +2,6 @@ package net.dongliu.dbutils.mapping;
 
 import net.dongliu.dbutils.exception.ReflectionException;
 
-import javax.annotation.Nullable;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 
@@ -17,7 +16,7 @@ public class GetterSetterProperty implements Property {
     }
 
     @Override
-    public void set(Object bean, @Nullable Object value) {
+    public void set(Object bean, Object value) {
         try {
             descriptor.getWriteMethod().invoke(bean, value);
         } catch (IllegalAccessException | InvocationTargetException e) {
@@ -25,7 +24,6 @@ public class GetterSetterProperty implements Property {
         }
     }
 
-    @Nullable
     @Override
     public Object get(Object bean) {
         try {

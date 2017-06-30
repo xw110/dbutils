@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Liu Dong
+ * Parse sql clause with named parameter
  */
-public class NamedSQLParser {
+class NamedSQLParser {
 
     static SQL translate(String clause, Map<String, ?> map) {
         ParseResult parseResult = parseClause(clause);
@@ -20,16 +20,14 @@ public class NamedSQLParser {
     }
 
 
-    static BatchSQL translate(String clause, List<? extends Map<String, ?>> mapList) {
-        ParseResult pair = parseClause(clause);
+    static BatchSQL translate(String clause, List<Map<String, ?>> maps) {
+        ParseResult result = parseClause(clause);
 
-        Object[][] paramsArray = new Object[mapList.size()][];
-        for (int i = 0; i < mapList.size(); i++) {
-            Map<String, ?> map = mapList.get(i);
-            paramsArray[i] = getParameters(map, pair.paramNames);
+        List<Object[]> list = new ArrayList<>(maps.size());
+        for (Map<String, ?> map : maps) {
+            list.add(getParameters(map, result.paramNames));
         }
-
-        return new BatchSQL(pair.clause, paramsArray);
+        return new BatchSQL(result.clause, list);
     }
 
 
@@ -52,16 +50,14 @@ public class NamedSQLParser {
         return new SQL(pair.clause, params);
     }
 
-    static BatchSQL translateBean(String clause, List<?> beanList) {
+    static BatchSQL translateBean(String clause, List<?> beans) {
         ParseResult pair = parseClause(clause);
 
-        Object[][] paramsArray = new Object[beanList.size()][];
-        for (int i = 0; i < beanList.size(); i++) {
-            Object bean = beanList.get(i);
-            paramsArray[i] = getParameters(bean, pair.paramNames);
+        List<Object[]> list = new ArrayList<>(beans.size());
+        for (Object bean : beans) {
+            list.add(getParameters(bean, pair.paramNames));
         }
-
-        return new BatchSQL(pair.clause, paramsArray);
+        return new BatchSQL(pair.clause, list);
     }
 
     private static Object[] getParameters(Object bean, List<String> names) {
@@ -90,6 +86,14 @@ public class NamedSQLParser {
             this.clause = clause;
             this.paramNames = paramNames;
         }
+
+        public String clause() {
+            return clause;
+        }
+
+        public List<String> paramNames() {
+            return paramNames;
+        }
     }
 
     static ParseResult parseClause(String clause) {
@@ -109,7 +113,7 @@ public class NamedSQLParser {
                     }
                     break;
                 case EXPECT_NAME:
-                    if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'z' || c == '_') {
+                    if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_') {
                         buffer.setLength(0);
                         buffer.append(c);
                         state = IN_NAME;
@@ -125,12 +129,12 @@ public class NamedSQLParser {
                         names.add(buffer.toString());
                         sb.append("?").append(c);
                         state = NORMAL;
-                    } else if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'z' || c == '_' || c >= '0' && c <= '9') {
+                    } else if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_' || c >= '0' && c <= '9') {
                         buffer.append(c);
                     } else {
-                        // illegal name character, just skip it?
-                        sb.append(buffer);
-                        sb.append(c);
+                        names.add(buffer.toString());
+                        sb.append("?").append(c);
+                        state = NORMAL;
                     }
             }
 

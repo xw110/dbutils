@@ -6,10 +6,9 @@ package net.dongliu.dbutils.exception;
  * @author Liu Dong
  */
 public class TooManyResultException extends UncheckedSQLException {
-    public TooManyResultException() {
-    }
+    private static final long serialVersionUID = 1992227080098912450L;
 
-    public TooManyResultException(String msg) {
-        super(msg);
+    public TooManyResultException(int count) {
+        super("Too many row in ResultSet, expect: " + count);
     }
 }

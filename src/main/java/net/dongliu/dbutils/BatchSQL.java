@@ -1,10 +1,15 @@
 package net.dongliu.dbutils;
 
+import java.util.List;
+
+/**
+ * Hold sql clause, and batch sql params
+ */
 public class BatchSQL {
     private final String clause;
-    private final Object[][] params;
+    private final List<Object[]> params;
 
-    public BatchSQL(String clause, Object[][] params) {
+    public BatchSQL(String clause, List<Object[]> params) {
         this.clause = clause;
         this.params = params;
     }
@@ -13,7 +18,7 @@ public class BatchSQL {
         return clause;
     }
 
-    public Object[][] params() {
+    public List<Object[]> params() {
         return params;
     }
 }

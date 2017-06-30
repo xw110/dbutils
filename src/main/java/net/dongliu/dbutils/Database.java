@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * Wrap jdbc, to execute SQL queries.
+ * Wrap JDBC dataSource, to execute SQL queries.
  *
  * @see ResultSetHandler
  */
@@ -28,14 +28,14 @@ public class Database extends SQLExecutor {
     }
 
     /**
-     * Create a database from data source
+     * Create a database from data source.
      */
     public static Database create(DataSource dataSource) {
         return new Database(dataSource);
     }
 
     /**
-     * Use internal non-pooled data source
+     * Create a database, with jdbc url, using internal non-pooled data source.
      */
     public static Database create(String jdbcUrl, String user, String password) {
         return new Database(SimpleDataSource.create(jdbcUrl, user, password));
