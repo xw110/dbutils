@@ -53,7 +53,7 @@ Student student = database.query("select id, name, age, is_male, birth_day from 
 
 ### Update
 
-The update methods execute insert/update/delete/create table/... sqls, and return affected row num.
+The update methods execute insert/update/delete/... sqls, and return affected row num.
 
 ```java
 int deleted = database.update("delete from student");
@@ -63,15 +63,15 @@ int deleted = database.update("delete from student");
 
 The insert methods execute insert sqls, and return auto generated keys as result set.
 
+```java
+Long id = database.insert(
+        "insert into student(name, age, is_male, birth_day) values(?,?,?,?)", name, age, true, birthDay)
+        .map((p, rs) -> rs.getLong(1)).get();
+```
+
 ### Batch Insert/Update
 
 batchInsert/batchUpdate do the same thing as insert/update, just can accept multi params and commit at once.
-
-### ResultSet Maping
-
-ResultSet can be convert to Object Arrays, Maps with column name as key, or Java Beans.
-
-You can custom ResultSet handle by implementing ResultSetHandler or RowMapper Interface.
 
 ### Named Parameters
 
@@ -80,8 +80,8 @@ Methods queryNamed/insertNamed/updateNamed/batchInsertNamed/batchUpdateNamed, us
 ```java
 Student student = ....;
 Long id = database.insertNamed(
-        "insert into student(name, age, is_male, birth_day) values(:name,:age,:isMale,:birthDay)",
-        student).map((provider, rs) -> rs.getLong(1)).get();
+        "insert into student(name, age, is_male, birth_day) values(:name,:age,:isMale,:birthDay)", student)
+        .map((provider, rs) -> rs.getLong(1)).get();
 
 ```
 
