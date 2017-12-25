@@ -10,7 +10,7 @@ DbUtils is in maven central repo.
 <dependency>
     <groupId>net.dongliu</groupId>
     <artifactId>dbutils</artifactId>
-    <version>4.0.0</version>
+    <version>4.0.1</version>
 </dependency>
 
 ```

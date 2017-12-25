@@ -2,17 +2,15 @@ package net.dongliu.dbutils.mapper;
 
 import net.dongliu.dbutils.exception.MissingPropertyException;
 import net.dongliu.dbutils.exception.ReflectionException;
-import net.dongliu.dbutils.exception.UncheckedSQLException;
 import net.dongliu.dbutils.mapping.BeanMapping;
 import net.dongliu.dbutils.mapping.Property;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.net.URL;
 import java.sql.*;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -69,79 +67,138 @@ public class BeanRowMapper<T> implements RowMapper<T> {
     }
 
 
-    private static final Set<Class<?>> wrappers = new HashSet<>();
+    private static final Set<Class<?>> wrappers = classSet(Byte.class, Short.class, Integer.class, Long.class,
+            Float.class, Double.class, Character.class, Boolean.class);
 
-    static {
-        wrappers.add(Byte.class);
-        wrappers.add(Short.class);
-        wrappers.add(Integer.class);
-        wrappers.add(Long.class);
-        wrappers.add(Float.class);
-        wrappers.add(Double.class);
-        wrappers.add(Character.class);
-        wrappers.add(Boolean.class);
-    }
+    // Additional support for java8 time types.
+    // Many drivers do not support java8 time well, so handle this using java.sql.* as bridge.
+    // Note that this will lose the nano seconds.
+    private static final Set<Class<?>> java8TimeTypes = classSet(
+            LocalDate.class, LocalDateTime.class, LocalTime.class, OffsetDateTime.class, OffsetTime.class
+    );
+
+    // Types that has a jdbc getXXX method support, and not primitive and wrapper types.
+    // The getXXX methods may have wilder conversion than getObject.
+    private static final Set<Class<?>> jdbcConvectionTypes = classSet(
+            String.class,
+            BigDecimal.class,
+            byte[].class,
+            java.sql.Date.class, Time.class, Timestamp.class,
+            Clob.class, Blob.class,
+            Array.class,
+            Struct.class,
+            Ref.class,
+            URL.class,
+            RowId.class,
+            SQLXML.class
+    );
 
     /**
      * Set a ResultSet column value into an object.
      */
     private void setColumnValue(ResultSet rs, int index, Object bean, Property property) throws SQLException {
 
-        Class<?> propertyType = property.type();
-        if (propertyType == String.class) {
+        Class<?> type = property.type();
+        if (type == String.class) {
+            // String is most frequent used type, place it here
             property.set(bean, rs.getString(index));
-        } else if (propertyType.isPrimitive()) {
-            setPrimitive(rs, index, bean, property, propertyType);
-        } else if (propertyType == byte[].class) {
-            property.set(bean, rs.getBytes(index));
-        } else if (wrappers.contains(propertyType)) {
-            setWrapper(rs, index, bean, property, propertyType);
-        } else if (propertyType == Timestamp.class || propertyType == Date.class) {
-            property.set(bean, rs.getTimestamp(index));
-        } else if (propertyType == java.sql.Date.class) {
-            property.set(bean, rs.getDate(index));
-        } else if (propertyType == java.sql.Time.class) {
-            property.set(bean, rs.getTime(index));
-        } else if (propertyType == Instant.class) {
-            Timestamp timestamp = rs.getTimestamp(index);
-            if (timestamp != null) {
-                property.set(bean, timestamp.toInstant());
-            } else {
-                property.set(bean, null);
-            }
-        } else if (propertyType == LocalDateTime.class) {
-            Timestamp timestamp = rs.getTimestamp(index);
-            if (timestamp != null) {
-                property.set(bean, timestamp.toLocalDateTime());
-            } else {
-                property.set(bean, null);
-            }
-        } else if (propertyType == LocalDate.class) {
-            Date date = rs.getDate(index);
-            if (date != null) {
-                property.set(bean, date.toLocalDate());
-            } else {
-                property.set(bean, null);
-            }
-        } else if (propertyType == LocalTime.class) {
-            Time time = rs.getTime(index);
-            if (time != null) {
-                property.set(bean, time.toLocalTime());
-            } else {
-                property.set(bean, null);
-            }
-        } else if (propertyType == SQLXML.class) {
-            property.set(bean, rs.getSQLXML(index));
-        } else if (propertyType.getClass().isEnum()) {
+        } else if (type.isPrimitive()) {
+            setPrimitive(rs, index, bean, property, type);
+        } else if (wrappers.contains(type)) {
+            setWrapper(rs, index, bean, property, type);
+        } else if (jdbcConvectionTypes.contains(type)) {
+            setJdbcTypes(rs, index, bean, property, type);
+        } else if (java8TimeTypes.contains(type)) {
+            setJava8Times(rs, index, bean, property, type);
+        } else if (type.getClass().isEnum()) {
+            // support for java enum, by use the name of enum
             String str = rs.getString(index);
             if (str == null) {
                 property.set(bean, null);
             } else {
-                property.set(bean, Enum.valueOf(propertyType.asSubclass(Enum.class), str));
+                property.set(bean, Enum.valueOf(type.asSubclass(Enum.class), str));
             }
         } else {
-            Object value = rs.getObject(index);
+            // Note: java8 LocalDate/LocalTime/LocalDateTime/OffsetDateTime/OffsetTime may be supported here.
+            Object value = rs.getObject(index, type);
             property.set(bean, value);
+        }
+    }
+
+    private void setJava8Times(ResultSet rs, int index, Object bean, Property property, Class<?> type)
+            throws SQLException {
+        if (type == LocalDate.class) {
+            Date date = rs.getDate(index);
+            if (date == null) {
+                property.set(bean, null);
+            } else {
+                property.set(bean, date.toLocalDate());
+            }
+        } else if (type == LocalTime.class) {
+            Time time = rs.getTime(index);
+            if (time == null) {
+                property.set(bean, null);
+            } else {
+                property.set(bean, time.toLocalTime());
+            }
+        } else if (type == LocalDateTime.class) {
+            Timestamp timestamp = rs.getTimestamp(index);
+            if (timestamp == null) {
+                property.set(bean, null);
+            } else {
+                property.set(bean, timestamp.toLocalDateTime());
+            }
+        } else if (type == OffsetDateTime.class) {
+            Timestamp timestamp = rs.getTimestamp(index);
+            if (timestamp == null) {
+                property.set(bean, null);
+            } else {
+                property.set(bean, OffsetDateTime.ofInstant(Instant.ofEpochMilli(timestamp.getTime()), ZoneId.systemDefault()));
+            }
+        } else if (type == OffsetTime.class) {
+            Timestamp timestamp = rs.getTimestamp(index);
+            if (timestamp == null) {
+                property.set(bean, null);
+            } else {
+                property.set(bean, OffsetTime.ofInstant(Instant.ofEpochMilli(timestamp.getTime()), ZoneId.systemDefault()));
+            }
+        } else {
+            throw new RuntimeException("not handle java8 types: " + type.getName());
+        }
+    }
+
+    private void setJdbcTypes(ResultSet rs, int index, Object bean, Property property, Class<?> type)
+            throws SQLException {
+        if (type == String.class) {
+            property.set(bean, rs.getString(index));
+        } else if (type == BigDecimal.class) {
+            property.set(bean, rs.getBigDecimal(index));
+        } else if (type == byte[].class) {
+            property.set(bean, rs.getBytes(index));
+        } else if (type == Timestamp.class) {
+            property.set(bean, rs.getTimestamp(index));
+        } else if (type == java.sql.Date.class) {
+            property.set(bean, rs.getDate(index));
+        } else if (type == Time.class) {
+            property.set(bean, rs.getTime(index));
+        } else if (type == Blob.class) {
+            property.set(bean, rs.getBlob(index));
+        } else if (type == Clob.class) {
+            property.set(bean, rs.getClob(index));
+        } else if (type == Array.class) {
+            property.set(bean, rs.getArray(index));
+        } else if (type == Struct.class) {
+            property.set(bean, rs.getObject(index, type));
+        } else if (type == Ref.class) {
+            property.set(bean, rs.getRef(index));
+        } else if (type == URL.class) {
+            property.set(bean, rs.getURL(index));
+        } else if (type == RowId.class) {
+            property.set(bean, rs.getRowId(index));
+        } else if (type == SQLXML.class) {
+            property.set(bean, rs.getSQLXML(index));
+        } else {
+            throw new RuntimeException("not handle jdbc type: " + type.getName());
         }
     }
 
@@ -197,7 +254,7 @@ public class BeanRowMapper<T> implements RowMapper<T> {
                 property.set(bean, value);
             }
         } else if (type == Character.class) {
-            throw new UncheckedSQLException("can not convert to char type");
+            property.set(bean, rs.getObject(index, type));
         } else {
             throw new RuntimeException("Not box type: " + type);
         }
@@ -220,9 +277,17 @@ public class BeanRowMapper<T> implements RowMapper<T> {
         } else if (type == byte.class) {
             property.set(bean, rs.getByte(index));
         } else if (type == char.class) {
-            throw new UncheckedSQLException("can not convert to char type");
+            property.set(bean, rs.getObject(index, type));
         } else {
             throw new RuntimeException("Not primitive type: " + type);
         }
+    }
+
+    private static Set<Class<?>> classSet(Class<?>... classes) {
+        Set<Class<?>> set = new HashSet<>();
+        for (Class<?> cls : classes) {
+            set.add(cls);
+        }
+        return set;
     }
 }

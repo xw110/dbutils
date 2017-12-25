@@ -4,8 +4,10 @@ import net.dongliu.dbutils.exception.UncheckedSQLException;
 
 import java.sql.*;
 import java.time.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static java.sql.ResultSet.CONCUR_READ_ONLY;
 import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
@@ -213,6 +215,21 @@ public abstract class SQLExecutor {
         return batchInsert(sql.clause(), sql.params());
     }
 
+    // Additional support for java8 time types.
+    // Many drivers do not support java8 time well, so handle this using java.sql.* as bridge.
+    // Note that this will lose the nano seconds.
+    private static final Set<Class<?>> java8TimeTypes = classSet(
+            LocalDate.class, LocalDateTime.class, LocalTime.class, OffsetDateTime.class, OffsetTime.class
+    );
+
+    private static Set<Class<?>> classSet(Class<?>... classes) {
+        Set<Class<?>> set = new HashSet<>();
+        for (Class<?> cls : classes) {
+            set.add(cls);
+        }
+        return set;
+    }
+
     /**
      * Fill the PreparedStatement replacement parameters with the given objects.
      *
@@ -232,22 +249,22 @@ public abstract class SQLExecutor {
                 continue;
             }
 
-            // Convert Java8 Time Types, due to some jdbc driver can not handle those.
-            // Now use system locale to convert time.
-            if (param instanceof Instant) {
-                param = Timestamp.from((Instant) param);
-            } else if (param instanceof LocalDate) {
-                param = java.sql.Date.valueOf((LocalDate) param);
-            } else if (param instanceof LocalTime) {
-                param = Time.valueOf((LocalTime) param);
-            } else if (param instanceof LocalDateTime) {
-                param = Timestamp.valueOf((LocalDateTime) param);
-            } else if (param instanceof ZonedDateTime) {
-                param = Timestamp.from(((ZonedDateTime) param).toInstant());
-            } else if (param instanceof OffsetDateTime) {
-                param = Timestamp.from(((OffsetDateTime) param).toInstant());
-            } else if (param instanceof OffsetTime) {
-                param = Time.valueOf(((OffsetTime) param).toLocalTime());
+            Class<?> type = param.getClass();
+            if (type.isEnum()) {
+                // special handle for enum types
+                param = ((Enum) param).name();
+            } else if (java8TimeTypes.contains(type)) {
+                if (param instanceof LocalDate) {
+                    param = Date.valueOf((LocalDate) param);
+                } else if (param instanceof LocalDateTime) {
+                    param = Timestamp.valueOf((LocalDateTime) param);
+                } else if (param instanceof LocalTime) {
+                    param = Time.valueOf((LocalTime) param);
+                } else if (param instanceof OffsetDateTime) {
+                    param = Timestamp.from(Instant.from((OffsetDateTime) param));
+                } else if (param instanceof OffsetTime) {
+                    param = Timestamp.from(Instant.from((OffsetTime) param));
+                }
             }
             stmt.setObject(i + 1, param);
         }

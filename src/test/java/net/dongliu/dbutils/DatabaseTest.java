@@ -26,7 +26,7 @@ public class DatabaseTest {
 
         // update(insert)
         int count = database.update("insert into student(name, age, is_male, birth_day) values(?,?,?,?)",
-                "Jack", 10, true, LocalDate.of(1999, 1, 2));
+                "Jack", 10, true, java.sql.Date.valueOf(LocalDate.of(1999, 1, 2)));
         assertEquals(1, count);
 
         Record record = database.query("select * from student fetch first 1 rows only").get();
