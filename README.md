@@ -48,7 +48,7 @@ The query method execute select queries, and return a resultSet.
 
 ```java
 Student student = database.query("select id, name, age, is_male, birth_day from student where id=?", 1L)
-                .map(Student.class).getOne();
+                .map(Student.class).get();
 ```
 
 ### Update
