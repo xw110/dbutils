@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
 
 public class BeanMappingTest {
     @Test
-    public void getBeanMapping() throws Exception {
+    public void getBeanMapping() {
         Object bean = new Student();
         BeanMapping beanMapping = BeanMapping.getBeanMapping(bean.getClass());
         Property age = beanMapping.getProperty("age");

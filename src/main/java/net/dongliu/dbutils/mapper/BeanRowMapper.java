@@ -1,5 +1,6 @@
 package net.dongliu.dbutils.mapper;
 
+import net.dongliu.commons.collection.Sets;
 import net.dongliu.dbutils.exception.MissingPropertyException;
 import net.dongliu.dbutils.exception.ReflectionException;
 import net.dongliu.dbutils.mapping.BeanMapping;
@@ -67,19 +68,19 @@ public class BeanRowMapper<T> implements RowMapper<T> {
     }
 
 
-    private static final Set<Class<?>> wrappers = classSet(Byte.class, Short.class, Integer.class, Long.class,
+    private static final Set<Class<?>> wrappers = Sets.of(Byte.class, Short.class, Integer.class, Long.class,
             Float.class, Double.class, Character.class, Boolean.class);
 
     // Additional support for java8 time types.
     // Many drivers do not support java8 time well, so handle this using java.sql.* as bridge.
     // Note that this will lose the nano seconds.
-    private static final Set<Class<?>> java8TimeTypes = classSet(
+    private static final Set<Class<?>> java8TimeTypes = Sets.of(
             LocalDate.class, LocalDateTime.class, LocalTime.class, OffsetDateTime.class, OffsetTime.class
     );
 
     // Types that has a jdbc getXXX method support, and not primitive and wrapper types.
     // The getXXX methods may have wilder conversion than getObject.
-    private static final Set<Class<?>> jdbcConvectionTypes = classSet(
+    private static final Set<Class<?>> jdbcConvectionTypes = Sets.of(
             String.class,
             BigDecimal.class,
             byte[].class,
@@ -283,11 +284,4 @@ public class BeanRowMapper<T> implements RowMapper<T> {
         }
     }
 
-    private static Set<Class<?>> classSet(Class<?>... classes) {
-        Set<Class<?>> set = new HashSet<>();
-        for (Class<?> cls : classes) {
-            set.add(cls);
-        }
-        return set;
-    }
 }
