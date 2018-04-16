@@ -1,16 +1,30 @@
 package net.dongliu.dbutils;
 
-import net.dongliu.dbutils.exception.UncheckedSQLException;
+import static java.sql.ResultSet.CONCUR_READ_ONLY;
+import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
+import static java.sql.Statement.RETURN_GENERATED_KEYS;
 
-import java.sql.*;
-import java.time.*;
-import java.util.HashSet;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static java.sql.ResultSet.CONCUR_READ_ONLY;
-import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
+import net.dongliu.commons.collection.Sets;
+import net.dongliu.dbutils.exception.UncheckedSQLException;
 
 /**
  * Parent class for all which can execute sqls.
@@ -69,7 +83,7 @@ public abstract class SQLExecutor {
             @Override
             protected PreparedStatement prepare(int fetchSize, String[] keyColumns, Connection connection)
                     throws SQLException {
-                return keyColumns.length == 0 ? connection.prepareStatement(clause, Statement.RETURN_GENERATED_KEYS)
+                return keyColumns.length == 0 ? connection.prepareStatement(clause, RETURN_GENERATED_KEYS)
                         : connection.prepareStatement(clause, keyColumns);
             }
 
@@ -113,7 +127,7 @@ public abstract class SQLExecutor {
             protected PreparedStatement prepare(int fetchSize, String[] keyColumns, Connection connection)
                     throws SQLException {
                 return keyColumns.length == 0 ?
-                        connection.prepareStatement(clause, Statement.RETURN_GENERATED_KEYS)
+                        connection.prepareStatement(clause, RETURN_GENERATED_KEYS)
                         : connection.prepareStatement(clause, keyColumns);
             }
 
@@ -218,17 +232,10 @@ public abstract class SQLExecutor {
     // Additional support for java8 time types.
     // Many drivers do not support java8 time well, so handle this using java.sql.* as bridge.
     // Note that this will lose the nano seconds.
-    private static final Set<Class<?>> java8TimeTypes = classSet(
-            LocalDate.class, LocalDateTime.class, LocalTime.class, OffsetDateTime.class, OffsetTime.class
+    private static final Set<Class<?>> java8TimeTypes = Sets.of(
+            LocalDate.class, LocalDateTime.class, LocalTime.class,
+            OffsetDateTime.class, OffsetTime.class
     );
-
-    private static Set<Class<?>> classSet(Class<?>... classes) {
-        Set<Class<?>> set = new HashSet<>();
-        for (Class<?> cls : classes) {
-            set.add(cls);
-        }
-        return set;
-    }
 
     /**
      * Fill the PreparedStatement replacement parameters with the given objects.

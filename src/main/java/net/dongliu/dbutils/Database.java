@@ -1,5 +1,7 @@
 package net.dongliu.dbutils;
 
+import static java.util.Objects.requireNonNull;
+
 import net.dongliu.dbutils.exception.UncheckedSQLException;
 
 import javax.sql.DataSource;
@@ -24,7 +26,7 @@ public class Database extends SQLExecutor {
      * Constructor to provide a DataSource.
      */
     private Database(DataSource dataSource) {
-        this.dataSource = Objects.requireNonNull(dataSource);
+        this.dataSource = requireNonNull(dataSource);
     }
 
     /**

@@ -1,11 +1,12 @@
 package net.dongliu.dbutils;
 
-import net.dongliu.dbutils.mapper.RowMapper;
+import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
+import net.dongliu.dbutils.exception.TooManyResultException;
+import net.dongliu.dbutils.mapper.RowMapper;
 
 /**
  * Class for holding sql execute contexts, and row mapper.
@@ -36,9 +37,9 @@ public abstract class TypedQueryContext<T> extends AbstractQueryContext {
     /**
      * Get ResultSet with only one row or no row as T.
      *
-     * @throws net.dongliu.dbutils.exception.TooManyResultException if hava more than one row
+     * @throws TooManyResultException if hava more than one row
      */
-    public T get() {
+    public T get() throws TooManyResultException {
         return convertTo(mapper);
     }
 

@@ -22,7 +22,8 @@ class SimpleDataSource implements DataSource {
     private final Driver driver;
     private final boolean autoCommit;
 
-    private SimpleDataSource(String jdbcUrl, String user, String password, Driver driver, boolean autoCommit) {
+    private SimpleDataSource(String jdbcUrl, String user, String password, Driver driver,
+            boolean autoCommit) {
         this.jdbcUrl = jdbcUrl;
         this.user = user;
         this.password = password;
@@ -49,7 +50,8 @@ class SimpleDataSource implements DataSource {
     /**
      * Create data source, with auto commit option
      */
-    public static DataSource create(String jdbcUrl, String user, String password, boolean autoCommit) {
+    public static DataSource create(String jdbcUrl, String user, String password,
+            boolean autoCommit) {
         Driver driver;
         try {
             driver = DriverManager.getDriver(jdbcUrl);
