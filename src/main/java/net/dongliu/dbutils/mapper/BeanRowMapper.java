@@ -2,7 +2,7 @@ package net.dongliu.dbutils.mapper;
 
 import net.dongliu.commons.collection.Sets;
 import net.dongliu.dbutils.exception.MissingPropertyException;
-import net.dongliu.dbutils.exception.ReflectionException;
+import net.dongliu.dbutils.exception.BeanMappingException;
 import net.dongliu.dbutils.mapping.BeanMapping;
 import net.dongliu.dbutils.mapping.Property;
 
@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
 import java.time.*;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -33,7 +32,7 @@ public class BeanRowMapper<T> implements RowMapper<T> {
         try {
             this.constructor = cls.getConstructor();
         } catch (NoSuchMethodException e) {
-            throw new ReflectionException(e);
+            throw new BeanMappingException(e);
         }
     }
 
@@ -48,7 +47,7 @@ public class BeanRowMapper<T> implements RowMapper<T> {
         try {
             bean = constructor.newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            throw new ReflectionException(e);
+            throw new BeanMappingException(e);
         }
         for (int i = 0; i < names.length; i++) {
             String name = names[i];

@@ -22,16 +22,16 @@ public class NamedSQLParserTest {
         assertArrayEquals(new Object[]{"Jack", 10}, sql.params());
 
         BatchSQL batchSQL = NamedSQLParser.translate("select * from table where name=:name and age>:age",
-                Arrays.asList(new HashMap<String, Object>() {{
+                new HashMap<String, Object>() {{
                     put("name", "Jack");
                     put("age", 10);
                 }}, new HashMap<String, Object>() {{
                     put("name", "Marry");
                     put("age", 11);
-                }}));
+                }});
         assertEquals("select * from table where name=? and age>?", batchSQL.clause());
-        assertArrayEquals(new Object[]{"Jack", 10}, batchSQL.params().get(0));
-        assertArrayEquals(new Object[]{"Marry", 11}, batchSQL.params().get(1));
+        assertArrayEquals(new Object[]{"Jack", 10}, batchSQL.params()[0]);
+        assertArrayEquals(new Object[]{"Marry", 11}, batchSQL.params()[1]);
     }
 
     @Test
@@ -47,10 +47,10 @@ public class NamedSQLParserTest {
         student2.setName("Marry");
         student2.setAge(11);
         BatchSQL batchSQL = NamedSQLParser.translateBean("select * from table where name=:name and age>:age",
-                Arrays.asList(student1, student2));
+                student1, student2);
         assertEquals("select * from table where name=? and age>?", batchSQL.clause());
-        assertArrayEquals(new Object[]{"Jack", 10}, batchSQL.params().get(0));
-        assertArrayEquals(new Object[]{"Marry", 11}, batchSQL.params().get(1));
+        assertArrayEquals(new Object[]{"Jack", 10}, batchSQL.params()[0]);
+        assertArrayEquals(new Object[]{"Marry", 11}, batchSQL.params()[1]);
 
 
         SQL sql2 = NamedSQLParser.translateBean(

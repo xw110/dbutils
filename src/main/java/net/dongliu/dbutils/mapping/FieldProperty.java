@@ -1,6 +1,6 @@
 package net.dongliu.dbutils.mapping;
 
-import net.dongliu.dbutils.exception.ReflectionException;
+import net.dongliu.dbutils.exception.BeanMappingException;
 
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
@@ -34,7 +34,7 @@ public class FieldProperty implements Property {
             field = cls.getField(name);
         } catch (NoSuchFieldException e) {
             // should not happen
-            throw new ReflectionException(e);
+            throw new BeanMappingException(e);
         }
         fieldRef = new SoftReference<>(field);
         return field;
@@ -45,7 +45,7 @@ public class FieldProperty implements Property {
         try {
             field().set(bean, value);
         } catch (IllegalAccessException e) {
-            throw new ReflectionException(e);
+            throw new BeanMappingException(e);
         }
     }
 
@@ -54,7 +54,7 @@ public class FieldProperty implements Property {
         try {
             return field().get(bean);
         } catch (IllegalAccessException e) {
-            throw new ReflectionException(e);
+            throw new BeanMappingException(e);
         }
     }
 

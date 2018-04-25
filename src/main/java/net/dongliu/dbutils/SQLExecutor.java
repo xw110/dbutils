@@ -1,30 +1,16 @@
 package net.dongliu.dbutils;
 
-import static java.sql.ResultSet.CONCUR_READ_ONLY;
-import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
-import static java.sql.Statement.RETURN_GENERATED_KEYS;
+import net.dongliu.commons.collection.Sets;
+import net.dongliu.dbutils.exception.UncheckedSQLException;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.sql.Types;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
-import java.util.List;
+import java.sql.*;
+import java.time.*;
 import java.util.Map;
 import java.util.Set;
 
-import net.dongliu.commons.collection.Sets;
-import net.dongliu.dbutils.exception.UncheckedSQLException;
+import static java.sql.ResultSet.CONCUR_READ_ONLY;
+import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
+import static java.sql.Statement.RETURN_GENERATED_KEYS;
 
 /**
  * Parent class for all which can execute sqls.
@@ -105,7 +91,7 @@ public abstract class SQLExecutor {
     /**
      * Execute batch insert/update/delete sql, and return affected row nums
      */
-    public int[] batchUpdate(String clause, List<Object[]> params) {
+    public int[] batchUpdate(String clause, Object[]... params) {
         try (ConnectionInfo ci = supplyConnection();
              PreparedStatement stmt = ci.connection().prepareStatement(clause)) {
             for (Object[] param : params) {
@@ -121,7 +107,7 @@ public abstract class SQLExecutor {
     /**
      * Execute batch insert sql, and return inserted auto-gen  keys as result.
      */
-    public QueryContext batchInsert(String clause, List<Object[]> params) {
+    public QueryContext batchInsert(String clause, Object[]... params) {
         return new QueryContext() {
             @Override
             protected PreparedStatement prepare(int fetchSize, String[] keyColumns, Connection connection)
@@ -176,7 +162,8 @@ public abstract class SQLExecutor {
     /**
      * Execute batch insert/update/delete named-parameter sql, and return affected row nums
      */
-    public int[] batchUpdateNamedMap(String clause, List<Map<String, ?>> params) {
+    @SafeVarargs
+    public final int[] batchUpdateNamed(String clause, Map<String, ?>... params) {
         BatchSQL sql = NamedSQLParser.translate(clause, params);
         return batchUpdate(sql.clause(), sql.params());
     }
@@ -184,7 +171,8 @@ public abstract class SQLExecutor {
     /**
      * Execute batch insert named-parameter sql, and return inserted keys as result
      */
-    public QueryContext batchInsertNamedMap(String clause, List<Map<String, ?>> params) {
+    @SafeVarargs
+    public final QueryContext batchInsertNamed(String clause, Map<String, ?>... params) {
         BatchSQL sql = NamedSQLParser.translate(clause, params);
         return batchInsert(sql.clause(), sql.params());
     }
@@ -216,7 +204,7 @@ public abstract class SQLExecutor {
     /**
      * Execute batch insert/update/delete named-parameter sql, and return affected row nums
      */
-    public int[] batchUpdateNamed(String clause, List<?> beans) {
+    public int[] batchUpdateNamed(String clause, Object... beans) {
         BatchSQL sql = NamedSQLParser.translateBean(clause, beans);
         return batchUpdate(sql.clause(), sql.params());
     }
@@ -224,7 +212,7 @@ public abstract class SQLExecutor {
     /**
      * Execute batch insert named-parameter sql, and return inserted auto-gen keys as result
      */
-    public QueryContext batchInsertNamed(String clause, List<?> beans) {
+    public QueryContext batchInsertNamed(String clause, Object... beans) {
         BatchSQL sql = NamedSQLParser.translateBean(clause, beans);
         return batchInsert(sql.clause(), sql.params());
     }

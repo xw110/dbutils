@@ -1,6 +1,6 @@
 package net.dongliu.dbutils.mapping;
 
-import net.dongliu.dbutils.exception.ReflectionException;
+import net.dongliu.dbutils.exception.BeanMappingException;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
@@ -20,7 +20,7 @@ public class GetterSetterProperty implements Property {
         try {
             descriptor.getWriteMethod().invoke(bean, value);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new ReflectionException(e);
+            throw new BeanMappingException(e);
         }
     }
 
@@ -29,7 +29,7 @@ public class GetterSetterProperty implements Property {
         try {
             return descriptor.getReadMethod().invoke(bean);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new ReflectionException(e);
+            throw new BeanMappingException(e);
         }
     }
 

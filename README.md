@@ -10,7 +10,7 @@ DbUtils is in maven central repo.
 <dependency>
     <groupId>net.dongliu</groupId>
     <artifactId>dbutils</artifactId>
-    <version>4.0.2</version>
+    <version>4.1.0</version>
 </dependency>
 
 ```
@@ -75,7 +75,8 @@ batchInsert/batchUpdate do the same thing as insert/update, just can accept mult
 
 ### Named Parameters
 
-Methods queryNamed/insertNamed/updateNamed/batchInsertNamed/batchUpdateNamed, use name-parameter for sql clause, get parameter from map using keys or bean using property name:
+Methods queryNamed/insertNamed/updateNamed/batchInsertNamed/batchUpdateNamed, use name-parameter for sql clause,
+get parameter from map using keys or bean using property name:
 
 ```java
 Student student = ....;

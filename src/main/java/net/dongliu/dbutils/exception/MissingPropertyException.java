@@ -3,7 +3,7 @@ package net.dongliu.dbutils.exception;
 /**
  * Thrown when bean do not have property to map with resultSet column
  */
-public class MissingPropertyException extends UncheckedSQLException {
+public class MissingPropertyException extends BeanMappingException {
     private static final long serialVersionUID = 6710560309701838985L;
 
     public MissingPropertyException(String typeName, String columnName) {

@@ -1,6 +1,6 @@
 package net.dongliu.dbutils.mapping;
 
-import net.dongliu.dbutils.exception.ReflectionException;
+import net.dongliu.dbutils.exception.BeanMappingException;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -88,7 +88,7 @@ public class BeanMapping {
         try {
             descriptors = Introspector.getBeanInfo(cls).getPropertyDescriptors();
         } catch (IntrospectionException e) {
-            throw new ReflectionException(e);
+            throw new BeanMappingException(e);
         }
         for (PropertyDescriptor descriptor : descriptors) {
             Method writeMethod = descriptor.getWriteMethod();

@@ -12,6 +12,7 @@ import java.util.function.Function;
 
 /**
  * Wrap JDBC dataSource, to execute SQL queries.
+ * DataSource would be a better name, we named this class as Database only for avoiding conflict.
  *
  * @see ResultSetHandler
  */

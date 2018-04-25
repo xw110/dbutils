@@ -7,7 +7,7 @@
     <artifactId>dbutils</artifactId>
     <name>Database Utils</name>
     <packaging>jar</packaging>
-    <version>4.0.4</version>
+    <version>4.1.0</version>
     <url>https://github.com/hsiafan/dbutils</url>
 
     <parent>
@@ -48,7 +48,7 @@
         <dependency>
             <groupId>net.dongliu</groupId>
             <artifactId>commons</artifactId>
-            <version>6.1.0</version>
+            <version>6.4.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -67,35 +67,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.moditect</groupId>
-                <artifactId>moditect-maven-plugin</artifactId>
-                <version>1.0.0.Alpha2</version>
-                <executions>
-                    <execution>
-                        <id>add-module-info</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>add-module-info</goal>
-                        </goals>
-                        <configuration>
-                            <module>
-                                <moduleInfo>
-                                    <name>net.dongliu.commons</name>
-                                    <exports>
-                                        net.dongliu.dbutils;
-                                        net.dongliu.dbutils.exception;
-                                        net.dongliu.dbutils.mapper;
-                                        !*;
-                                    </exports>
-                                    <requires>
-                                    </requires>
-                                </moduleInfo>
-                            </module>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -137,6 +108,35 @@
             <id>release</id>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.moditect</groupId>
+                        <artifactId>moditect-maven-plugin</artifactId>
+                        <version>1.0.0.Alpha2</version>
+                        <executions>
+                            <execution>
+                                <id>add-module-info</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>add-module-info</goal>
+                                </goals>
+                                <configuration>
+                                    <module>
+                                        <moduleInfo>
+                                            <name>net.dongliu.commons</name>
+                                            <exports>
+                                                net.dongliu.dbutils;
+                                                net.dongliu.dbutils.exception;
+                                                net.dongliu.dbutils.mapper;
+                                                !*;
+                                            </exports>
+                                            <requires>
+                                            </requires>
+                                        </moduleInfo>
+                                    </module>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
