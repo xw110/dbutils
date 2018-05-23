@@ -10,13 +10,13 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class DatabaseTest {
+public class SQLRunnerTest {
 
     @Test
     public void testDatabase() {
         String jdbcUrl = "jdbc:derby:memory:derbyDB;create=true";
-        Database database = Database.create(jdbcUrl, null, null);
-        database.update("create table student(" +
+        SQLRunner runner = SQLRunner.of(jdbcUrl, null, null);
+        runner.update("create table student(" +
                 "id bigint not null GENERATED ALWAYS AS IDENTITY CONSTRAINT PEOPLE_PK PRIMARY KEY, " +
                 "name varchar(50) not null," +
                 "age int not null," +
@@ -25,35 +25,34 @@ public class DatabaseTest {
                 ")");
 
         // update(insert)
-        int count = database.update("insert into student(name, age, is_male, birth_day) values(?,?,?,?)",
+        int count = runner.update("insert into student(name, age, is_male, birth_day) values(?,?,?,?)",
                 "Jack", 10, true, java.sql.Date.valueOf(LocalDate.of(1999, 1, 2)));
         assertEquals(1, count);
 
-        Record record = database.query("select * from student fetch first 1 rows only").get();
+        Record record = runner.query("select * from student fetch first 1 rows only").getOne();
         assertArrayEquals(new Object[]{1L, "Jack", 10, true, java.sql.Date.valueOf(LocalDate.of(1999, 1, 2))},
                 record.getValues());
 
-        record = database.query("select * from student fetch first 1 rows only").get();
-        assertNotNull(record);
+        record = runner.query("select * from student fetch first 1 rows only").getOne();
         assertEquals("Jack", record.getString("name"));
 
-        Student student = database.query("select id, name, age, is_male, birth_day from student where id=?", 1L)
-                .map(Student.class).get();
-        assertNotNull(student);
+        Student student = runner.query("select id, name, age, is_male, birth_day from student where id=?", 1L)
+                .map(Student.class).getOne();
         Student s = new Student(1, "Jack", 10, true, LocalDate.of(1999, 1, 2));
         assertEquals(s, student);
 
-        List<Student> students = database.query("select * from student").map(Student.class).getList();
+        List<Student> students = runner.query("select * from student").map(Student.class).getList();
         assertEquals(Collections.singletonList(s), students);
 
         // update(delete)
-        int deleted = database.update("delete from student");
+        int deleted = runner.update("delete from student");
         assertEquals(1, deleted);
 
-        // insert
-        Long id = database.insertNamed(
+        // named insert
+        NamedSQLRunner namedSQLRunner = NamedSQLRunner.of(jdbcUrl, null, null);
+        Long id = namedSQLRunner.insertByBean(
                 "insert into student(name, age, is_male, birth_day) values(:name,:age,:isMale,:birthDay)",
-                student).map((p, rs) -> rs.getLong(1)).get();
+                student).map((p, rs) -> rs.getLong(1)).getOne();
         assertNotNull(id);
         assertEquals(2, id.longValue());
 

@@ -1,5 +1,7 @@
 package net.dongliu.dbutils;
 
+import java.util.List;
+
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -7,9 +9,9 @@ import static java.util.Objects.requireNonNull;
  */
 public class BatchSQL {
     private final String clause;
-    private final Object[][] params;
+    private final List<Object[]> params;
 
-    public BatchSQL(String clause, Object[][] params) {
+    public BatchSQL(String clause, List<Object[]> params) {
         this.clause = requireNonNull(clause);
         this.params = requireNonNull(params);
     }
@@ -18,7 +20,7 @@ public class BatchSQL {
         return clause;
     }
 
-    public Object[][] params() {
+    public List<Object[]> params() {
         return params;
     }
 }

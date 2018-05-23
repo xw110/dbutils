@@ -1,19 +1,20 @@
 package net.dongliu.dbutils;
 
-import static java.util.Objects.requireNonNull;
+import net.dongliu.dbutils.exception.TooManyResultException;
+import net.dongliu.dbutils.mapper.RowMapper;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Stream;
 
-import net.dongliu.dbutils.exception.TooManyResultException;
-import net.dongliu.dbutils.mapper.RowMapper;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Class for holding sql execute contexts, and row mapper.
  *
  * @author Liu Dong
  */
-public abstract class TypedQueryContext<T> extends AbstractQueryContext {
+public abstract class TypedQueryContext<T> extends AbstractQueryContext<TypedQueryContext<T>> {
 
     private final RowMapper<T> mapper;
 
@@ -22,24 +23,14 @@ public abstract class TypedQueryContext<T> extends AbstractQueryContext {
         this.mapper = requireNonNull(mapper);
     }
 
-    @Override
-    public TypedQueryContext<T> keyColumns(String[] keyColumns) {
-        super.keyColumns(keyColumns);
-        return this;
-    }
-
-    @Override
-    public TypedQueryContext<T> fetchSize(int fetchSize) {
-        super.fetchSize(fetchSize);
-        return this;
-    }
-
     /**
-     * Get ResultSet with only one row or no row as T.
+     * Get ResultSet with only one row.
      *
+     * @return null if row not exist
      * @throws TooManyResultException if hava more than one row
      */
-    public T get() throws TooManyResultException {
+    @Nullable
+    public T getOne() throws TooManyResultException {
         return convertTo(mapper);
     }
 

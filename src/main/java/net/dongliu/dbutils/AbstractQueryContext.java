@@ -4,6 +4,7 @@ import net.dongliu.dbutils.exception.TooManyResultException;
 import net.dongliu.dbutils.exception.UncheckedSQLException;
 import net.dongliu.dbutils.mapper.ColumnNamesProvider;
 import net.dongliu.dbutils.mapper.RowMapper;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.*;
 import java.util.*;
@@ -12,7 +13,7 @@ import java.util.stream.StreamSupport;
 
 import static java.util.Objects.requireNonNull;
 
-public abstract class AbstractQueryContext {
+abstract class AbstractQueryContext<S extends AbstractQueryContext<S>> {
     private String[] keyColumns = emptyColumn;
     private int fetchSize = 0;
 
@@ -26,22 +27,25 @@ public abstract class AbstractQueryContext {
      * This method is for fetching Insert sql clause result.
      * If not set, would use auto-generated key columns of table.
      */
-    public AbstractQueryContext keyColumns(String[] keyColumns) {
+    @SuppressWarnings("unchecked")
+    public S keyColumns(String[] keyColumns) {
         this.keyColumns = requireNonNull(keyColumns);
-        return this;
+        return (S) this;
     }
 
     /**
      * Set the num of rows resultSet fetch each time. Default 0, means not set.
      */
-    public AbstractQueryContext fetchSize(int fetchSize) {
+    @SuppressWarnings("unchecked")
+    public S fetchSize(int fetchSize) {
         this.fetchSize = fetchSize;
-        return this;
+        return (S) this;
     }
 
     /**
      * Handler result with single row or no row, and return converted value
      */
+    @Nullable
     protected <T> T convertTo(RowMapper<T> mapper) {
         return handle(rs -> {
             if (!rs.next()) {
@@ -74,8 +78,8 @@ public abstract class AbstractQueryContext {
      * Handler result, and return converted values
      */
     public <T> T handle(ResultSetHandler<T> handler) {
-        try (ConnectionInfo conn = retrieveConnection();
-             PreparedStatement statement = prepare(fetchSize, keyColumns, conn.connection())) {
+        try (MyConnection conn = retrieveConnection();
+             PreparedStatement statement = prepare(fetchSize, keyColumns, conn)) {
             try (ResultSet resultSet = execute(fetchSize, statement)) {
                 return handler.handle(resultSet);
             }
@@ -89,7 +93,7 @@ public abstract class AbstractQueryContext {
      * Make sure stream is closed when no longer used.
      */
     public <T> Stream<T> asStream(RowMapper<T> mapper) {
-        ConnectionInfo conn;
+        MyConnection conn;
         try {
             conn = retrieveConnection();
         } catch (SQLException e) {
@@ -97,12 +101,12 @@ public abstract class AbstractQueryContext {
         }
         PreparedStatement statement;
         try {
-            statement = prepare(fetchSize, keyColumns, conn.connection());
+            statement = prepare(fetchSize, keyColumns, conn);
         } catch (SQLException e) {
-            conn.closeConnection();
+            close(e, conn);
             throw new UncheckedSQLException(e);
         } catch (Throwable t) {
-            conn.closeConnection();
+            close(t, conn);
             throw t;
         }
 
@@ -110,12 +114,10 @@ public abstract class AbstractQueryContext {
         try {
             resultSet = execute(fetchSize, statement);
         } catch (SQLException e) {
-            closeStatement(statement);
-            conn.closeConnection();
+            close(e, statement, conn);
             throw new UncheckedSQLException(e);
         } catch (Throwable t) {
-            closeStatement(statement);
-            conn.closeConnection();
+            close(t, statement, conn);
             throw t;
         }
         return asStream(resultSet, mapper, statement, conn);
@@ -124,23 +126,50 @@ public abstract class AbstractQueryContext {
     /**
      * Wrap resultSet as stream. Make sure stream is closed when no longer used.
      */
-    private <T> Stream<T> asStream(ResultSet resultSet, RowMapper<T> mapper, Statement statement, ConnectionInfo conn) {
+    private <T> Stream<T> asStream(ResultSet resultSet, RowMapper<T> mapper, Statement statement, MyConnection conn) {
         Iterator<T> iterator = asIterator(resultSet, mapper);
         Spliterator<T> spliterator = Spliterators.spliteratorUnknownSize(iterator, 0);
         Stream<T> stream = StreamSupport.stream(spliterator, false);
-        return stream.onClose(() -> {
+        return stream.onClose(wrapRunnable(resultSet::close))
+                .onClose(wrapRunnable(statement::close))
+                .onClose(wrapRunnable(conn::close));
+    }
+
+    private static void close(Throwable t, Connection connection) {
+        try {
+            connection.close();
+        } catch (Throwable e) {
+            t.addSuppressed(e);
+        }
+    }
+
+    private static void close(Throwable t, Statement statement, Connection connection) {
+        try {
+            statement.close();
+        } catch (Throwable e) {
+            t.addSuppressed(e);
+        }
+        try {
+            connection.close();
+        } catch (Throwable e) {
+            t.addSuppressed(e);
+        }
+    }
+
+    @FunctionalInterface
+    interface SQLRunnable {
+        void run() throws SQLException;
+    }
+
+
+    private static Runnable wrapRunnable(SQLRunnable runnable) {
+        return () -> {
             try {
-                resultSet.close();
+                runnable.run();
             } catch (SQLException e) {
                 throw new UncheckedSQLException(e);
             }
-        }).onClose(() -> {
-            try {
-                statement.close();
-            } catch (SQLException e) {
-                throw new UncheckedSQLException(e);
-            }
-        }).onClose(conn::close);
+        };
     }
 
     protected <T> Iterator<T> asIterator(ResultSet rs, RowMapper<T> mapper) {
@@ -184,13 +213,6 @@ public abstract class AbstractQueryContext {
         };
     }
 
-    private void closeStatement(Statement statement) {
-        try {
-            statement.close();
-        } catch (Throwable ignore) {
-        }
-    }
-
     private ColumnNamesProvider columnNamesProvider(ResultSet rs) {
         return new ColumnNamesProvider() {
             private String[] names;
@@ -224,5 +246,5 @@ public abstract class AbstractQueryContext {
 
     protected abstract ResultSet execute(int fetchSize, PreparedStatement statement) throws SQLException;
 
-    protected abstract ConnectionInfo retrieveConnection() throws SQLException;
+    protected abstract MyConnection retrieveConnection() throws SQLException;
 }

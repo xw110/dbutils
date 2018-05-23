@@ -1,6 +1,6 @@
 package net.dongliu.dbutils;
 
-import net.dongliu.commons.Arrays2;
+import net.dongliu.commons.collection.Lists;
 import net.dongliu.dbutils.exception.ParameterNotFoundException;
 import net.dongliu.dbutils.mapping.BeanMapping;
 import net.dongliu.dbutils.mapping.Property;
@@ -21,11 +21,10 @@ class NamedSQLParser {
     }
 
 
-    @SafeVarargs
-    static BatchSQL translate(String clause, Map<String, ?>... maps) {
+    static BatchSQL translate(String clause, List<Map<String, ?>> maps) {
         ParseResult result = parseClause(clause);
 
-        Object[][] list = Arrays2.convert(maps, Object[][]::new, map -> getParameters(map, result.paramNames));
+        List<Object[]> list = Lists.convert(maps, map -> getParameters(map, result.paramNames));
         return new BatchSQL(result.clause, list);
     }
 
@@ -44,15 +43,15 @@ class NamedSQLParser {
 
 
     static SQL translateBean(String clause, Object bean) {
-        ParseResult pair = parseClause(clause);
-        Object[] params = getParameters(bean, pair.paramNames);
-        return new SQL(pair.clause, params);
+        ParseResult parseResult = parseClause(clause);
+        Object[] params = getParameters(bean, parseResult.paramNames);
+        return new SQL(parseResult.clause, params);
     }
 
-    static BatchSQL translateBean(String clause, Object... beans) {
+    static BatchSQL translateBean(String clause, List<?> beans) {
         ParseResult pair = parseClause(clause);
 
-        Object[][] params = Arrays2.convert(beans, Object[][]::new, bean -> getParameters(bean, pair.paramNames));
+        List<Object[]> params = Lists.convert(beans, bean -> getParameters(bean, pair.paramNames));
         return new BatchSQL(pair.clause, params);
     }
 

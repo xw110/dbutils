@@ -4,6 +4,7 @@ import net.dongliu.dbutils.exception.TooManyResultException;
 import net.dongliu.dbutils.mapper.BeanRowMapper;
 import net.dongliu.dbutils.mapper.RecordRowMapper;
 import net.dongliu.dbutils.mapper.RowMapper;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,21 +20,9 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Liu Dong
  */
-public abstract class QueryContext extends AbstractQueryContext {
+public abstract class QueryContext extends AbstractQueryContext<QueryContext> {
 
     QueryContext() {
-    }
-
-    @Override
-    public QueryContext keyColumns(String[] keyColumns) {
-        super.keyColumns(keyColumns);
-        return this;
-    }
-
-    @Override
-    public QueryContext fetchSize(int fetchSize) {
-        super.fetchSize(fetchSize);
-        return this;
     }
 
     /**
@@ -53,7 +42,7 @@ public abstract class QueryContext extends AbstractQueryContext {
             }
 
             @Override
-            protected ConnectionInfo retrieveConnection() throws SQLException {
+            protected MyConnection retrieveConnection() throws SQLException {
                 return QueryContext.this.retrieveConnection();
             }
         };
@@ -62,8 +51,8 @@ public abstract class QueryContext extends AbstractQueryContext {
     /**
      * Set a bean lass to convert the ResultSet to.
      */
-    public <T> TypedQueryContext<T> map(Class<T> cls) {
-        return map(cls, true);
+    public <T> TypedQueryContext<T> map(Class<T> beanClass) {
+        return map(beanClass, true);
     }
 
     /**
@@ -71,8 +60,8 @@ public abstract class QueryContext extends AbstractQueryContext {
      *
      * @param abortWhenMissingProperty if true: when bean do not have property to hold column, throw exception
      */
-    public <T> TypedQueryContext<T> map(Class<T> cls, boolean abortWhenMissingProperty) {
-        return map(BeanRowMapper.getInstance(cls, abortWhenMissingProperty));
+    public <T> TypedQueryContext<T> map(Class<T> beanClass, boolean abortWhenMissingProperty) {
+        return map(BeanRowMapper.getInstance(beanClass, abortWhenMissingProperty));
     }
 
     /**
@@ -83,12 +72,13 @@ public abstract class QueryContext extends AbstractQueryContext {
     }
 
     /**
-     * Return query result as Record
+     * Return query result as one Record
      *
-     * @return null if has no record
+     * @return null if no record returned.
      * @throws TooManyResultException if has more than one result
      */
-    public Record get() throws TooManyResultException {
+    @Nullable
+    public Record getOne() throws TooManyResultException {
         return convertTo(RecordRowMapper.getInstance());
     }
 

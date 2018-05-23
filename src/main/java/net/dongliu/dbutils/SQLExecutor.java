@@ -5,7 +5,7 @@ import net.dongliu.dbutils.exception.UncheckedSQLException;
 
 import java.sql.*;
 import java.time.*;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 import static java.sql.ResultSet.CONCUR_READ_ONLY;
@@ -13,12 +13,10 @@ import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 
 /**
- * Parent class for all which can execute sqls.
- *
- * @author Liu Dong
+ * For reuse code across SQLRunner and TransactionContext.
  */
-public abstract class SQLExecutor {
-    protected abstract ConnectionInfo supplyConnection() throws SQLException;
+abstract class SQLExecutor {
+    protected abstract MyConnection supplyConnection() throws SQLException;
 
     /**
      * Execute select sql, and return query result.
@@ -42,7 +40,7 @@ public abstract class SQLExecutor {
             }
 
             @Override
-            protected ConnectionInfo retrieveConnection() throws SQLException {
+            protected MyConnection retrieveConnection() throws SQLException {
                 return supplyConnection();
             }
         };
@@ -52,8 +50,8 @@ public abstract class SQLExecutor {
      * Execute insert/update/delete sql, and return affected row num
      */
     public int update(String clause, Object... params) {
-        try (ConnectionInfo ci = supplyConnection();
-             PreparedStatement stmt = ci.connection().prepareStatement(clause)) {
+        try (MyConnection ci = supplyConnection();
+             PreparedStatement stmt = ci.prepareStatement(clause)) {
             fillStatement(stmt, params);
             return stmt.executeUpdate();
         } catch (SQLException e) {
@@ -81,7 +79,7 @@ public abstract class SQLExecutor {
             }
 
             @Override
-            protected ConnectionInfo retrieveConnection() throws SQLException {
+            protected MyConnection retrieveConnection() throws SQLException {
                 return supplyConnection();
             }
 
@@ -91,9 +89,9 @@ public abstract class SQLExecutor {
     /**
      * Execute batch insert/update/delete sql, and return affected row nums
      */
-    public int[] batchUpdate(String clause, Object[]... params) {
-        try (ConnectionInfo ci = supplyConnection();
-             PreparedStatement stmt = ci.connection().prepareStatement(clause)) {
+    public int[] batchUpdate(String clause, List<Object[]> params) {
+        try (MyConnection ci = supplyConnection();
+             PreparedStatement stmt = ci.prepareStatement(clause)) {
             for (Object[] param : params) {
                 fillStatement(stmt, param);
                 stmt.addBatch();
@@ -107,7 +105,7 @@ public abstract class SQLExecutor {
     /**
      * Execute batch insert sql, and return inserted auto-gen  keys as result.
      */
-    public QueryContext batchInsert(String clause, Object[]... params) {
+    public QueryContext batchInsert(String clause, List<Object[]> params) {
         return new QueryContext() {
             @Override
             protected PreparedStatement prepare(int fetchSize, String[] keyColumns, Connection connection)
@@ -128,93 +126,10 @@ public abstract class SQLExecutor {
             }
 
             @Override
-            protected ConnectionInfo retrieveConnection() throws SQLException {
+            protected MyConnection retrieveConnection() throws SQLException {
                 return supplyConnection();
             }
         };
-    }
-
-
-    /**
-     * Execute select named-parameter sql, and return query result
-     */
-    public QueryContext queryNamed(String clause, Map<String, ?> params) {
-        SQL sql = NamedSQLParser.translate(clause, params);
-        return query(sql.clause(), sql.params());
-    }
-
-    /**
-     * Execute insert/update/delete named-parameter sql, and return affected row num
-     */
-    public int updateNamed(String clause, Map<String, ?> params) {
-        SQL sql = NamedSQLParser.translate(clause, params);
-        return update(sql.clause(), sql.params());
-    }
-
-    /**
-     * Execute insert named-parameter sql, and return inserted auto-gen keys as result
-     */
-    public QueryContext insertNamed(String clause, Map<String, ?> params) {
-        SQL sql = NamedSQLParser.translate(clause, params);
-        return insert(sql.clause(), sql.params());
-    }
-
-    /**
-     * Execute batch insert/update/delete named-parameter sql, and return affected row nums
-     */
-    @SafeVarargs
-    public final int[] batchUpdateNamed(String clause, Map<String, ?>... params) {
-        BatchSQL sql = NamedSQLParser.translate(clause, params);
-        return batchUpdate(sql.clause(), sql.params());
-    }
-
-    /**
-     * Execute batch insert named-parameter sql, and return inserted keys as result
-     */
-    @SafeVarargs
-    public final QueryContext batchInsertNamed(String clause, Map<String, ?>... params) {
-        BatchSQL sql = NamedSQLParser.translate(clause, params);
-        return batchInsert(sql.clause(), sql.params());
-    }
-
-    /**
-     * Execute select named-parameter sql, and return query result
-     */
-    public QueryContext queryNamed(String clause, Object bean) {
-        SQL sql = NamedSQLParser.translateBean(clause, bean);
-        return query(sql.clause(), sql.params());
-    }
-
-    /**
-     * Execute insert/update/delete named-parameter sql, and return affected row num
-     */
-    public int updateNamed(String clause, Object bean) {
-        SQL sql = NamedSQLParser.translateBean(clause, bean);
-        return update(sql.clause(), sql.params());
-    }
-
-    /**
-     * Execute insert named-parameter sql, and return inserted auto-gen keys as result
-     */
-    public QueryContext insertNamed(String clause, Object bean) {
-        SQL sql = NamedSQLParser.translateBean(clause, bean);
-        return insert(sql.clause(), sql.params());
-    }
-
-    /**
-     * Execute batch insert/update/delete named-parameter sql, and return affected row nums
-     */
-    public int[] batchUpdateNamed(String clause, Object... beans) {
-        BatchSQL sql = NamedSQLParser.translateBean(clause, beans);
-        return batchUpdate(sql.clause(), sql.params());
-    }
-
-    /**
-     * Execute batch insert named-parameter sql, and return inserted auto-gen keys as result
-     */
-    public QueryContext batchInsertNamed(String clause, Object... beans) {
-        BatchSQL sql = NamedSQLParser.translateBean(clause, beans);
-        return batchInsert(sql.clause(), sql.params());
     }
 
     // Additional support for java8 time types.
@@ -222,7 +137,8 @@ public abstract class SQLExecutor {
     // Note that this will lose the nano seconds.
     private static final Set<Class<?>> java8TimeTypes = Sets.of(
             LocalDate.class, LocalDateTime.class, LocalTime.class,
-            OffsetDateTime.class, OffsetTime.class
+            OffsetDateTime.class, OffsetTime.class,
+            Instant.class
     );
 
     /**
@@ -259,6 +175,8 @@ public abstract class SQLExecutor {
                     param = Timestamp.from(Instant.from((OffsetDateTime) param));
                 } else if (param instanceof OffsetTime) {
                     param = Timestamp.from(Instant.from((OffsetTime) param));
+                } else if (param instanceof Instant) {
+                    param = Timestamp.from((Instant) param);
                 }
             }
             stmt.setObject(i + 1, param);

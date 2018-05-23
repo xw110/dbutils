@@ -7,7 +7,7 @@
     <artifactId>dbutils</artifactId>
     <name>Database Utils</name>
     <packaging>jar</packaging>
-    <version>4.1.0</version>
+    <version>5.0.0</version>
     <url>https://github.com/hsiafan/dbutils</url>
 
     <parent>
@@ -46,9 +46,15 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>16.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>net.dongliu</groupId>
             <artifactId>commons</artifactId>
-            <version>6.4.0</version>
+            <version>6.7.2</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
