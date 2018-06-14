@@ -7,7 +7,7 @@
     <artifactId>dbutils</artifactId>
     <name>Database Utils</name>
     <packaging>jar</packaging>
-    <version>5.0.0</version>
+    <version>5.0.1</version>
     <url>https://github.com/hsiafan/dbutils</url>
 
     <parent>
@@ -128,7 +128,7 @@
                                 <configuration>
                                     <module>
                                         <moduleInfo>
-                                            <name>net.dongliu.commons</name>
+                                            <name>net.dongliu.dbutils</name>
                                             <exports>
                                                 net.dongliu.dbutils;
                                                 net.dongliu.dbutils.exception;
