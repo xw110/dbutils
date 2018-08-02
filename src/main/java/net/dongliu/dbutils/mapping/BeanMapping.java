@@ -8,9 +8,9 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.Collection;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Bean mapping info
@@ -46,8 +46,12 @@ public class BeanMapping {
     }
 
 
-    private static final WeakHashMap<Class<?>, BeanMapping> cache = new WeakHashMap<>();
-    private static final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ClassValue<BeanMapping> cache = new ClassValue<BeanMapping>() {
+        @Override
+        protected BeanMapping computeValue(Class<?> type) {
+            return _getBeanMapping(type);
+        }
+    };
 
     /**
      * Returns a PropertyDescriptor[] for the given Class.
@@ -56,29 +60,7 @@ public class BeanMapping {
      * @return A PropertyDescriptor[] describing the Class.
      */
     public static BeanMapping getBeanMapping(Class<?> cls) {
-        lock.readLock().lock();
-        try {
-            BeanMapping beanMapping = cache.get(cls);
-            if (beanMapping != null) {
-                return beanMapping;
-            }
-        } finally {
-            lock.readLock().unlock();
-        }
-
-        lock.writeLock().lock();
-        try {
-            BeanMapping beanMapping = cache.get(cls);
-            if (beanMapping != null) {
-                return beanMapping;
-            }
-            beanMapping = _getBeanMapping(cls);
-            cache.put(cls, beanMapping);
-            return beanMapping;
-        } finally {
-            lock.writeLock().unlock();
-        }
-
+        return cache.get(cls);
     }
 
     private static BeanMapping _getBeanMapping(Class<?> cls) {
