@@ -8,14 +8,15 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
-public class SQLRunnerTest {
+public class DatabaseTest {
 
     @Test
     public void testDatabase() {
         String jdbcUrl = "jdbc:derby:memory:derbyDB;create=true";
-        SQLRunner runner = SQLRunner.of(jdbcUrl, null, null);
+        Database runner = Database.of(jdbcUrl, null, null);
         runner.update("create table student(" +
                 "id bigint not null GENERATED ALWAYS AS IDENTITY CONSTRAINT PEOPLE_PK PRIMARY KEY, " +
                 "name varchar(50) not null," +
@@ -47,14 +48,6 @@ public class SQLRunnerTest {
         // update(delete)
         int deleted = runner.update("delete from student");
         assertEquals(1, deleted);
-
-        // named insert
-        NamedSQLRunner namedSQLRunner = NamedSQLRunner.of(jdbcUrl, null, null);
-        Long id = namedSQLRunner.insertByBean(
-                "insert into student(name, age, is_male, birth_day) values(:name,:age,:isMale,:birthDay)",
-                student).map((p, rs) -> rs.getLong(1)).getOne();
-        assertNotNull(id);
-        assertEquals(2, id.longValue());
 
         try {
             DriverManager.getConnection("jdbc:derby:memory:derbyDB;drop=true");

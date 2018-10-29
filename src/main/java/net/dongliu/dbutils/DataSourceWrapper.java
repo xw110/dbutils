@@ -9,7 +9,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Wrap JDBC dataSource, to execute SQL queries.
  */
-class DataSourceSQLRunner extends SQLRunner {
+class DataSourceWrapper extends Database {
 
     /**
      * The DataSource to retrieve connections from.
@@ -19,7 +19,7 @@ class DataSourceSQLRunner extends SQLRunner {
     /**
      * Constructor to provide a DataSource.
      */
-    DataSourceSQLRunner(DataSource dataSource) {
+    DataSourceWrapper(DataSource dataSource) {
         this.dataSource = requireNonNull(dataSource);
     }
 

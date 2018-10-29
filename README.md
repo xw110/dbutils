@@ -17,30 +17,21 @@ DbUtils is in maven central repo.
 
 ## Usage
 
-DbUtils can wrap a jdbc dataSource, into a SQLRunner instance, for querying or updating.
-SQLRunner can also be create from jdbcUrl too, using a simple non-pooled dataSource.
+DbUtils can wrap a jdbc dataSource, into a Database instance, for querying or updating.
+Database can also be create from jdbcUrl too, using a simple non-pooled dataSource.
 
 Wrapping dataSource:
 
 ```java
-// create SQLRunner from dataSource
+Database
 DataSource dataSource = ...;
-SQLRunner runner = SQLRunner.of(dataSource);
-runner.query(clause)...
+Database database = Database.of(dataSource);
+database.query(clause)...
 
 // or create from jdbc url
 
-SQLRunner runner = SQLRunner.of(jdbcUrl, username, password);
-runner.query(clause)...
-```
-
-DbUtils can wrap one connection too, then you can setting/manager the connection by yourself:
-
-```java
-Connection conn = ...;
-SQLRunner runner = SQLRunner.of(conn);
-runner.query(clause)...
-conn.close();
+Database database = Database.of(jdbcUrl, username, password);
+database.query(clause)...
 ```
 
 ### Query
@@ -48,7 +39,7 @@ conn.close();
 The query method execute select queries, and return a resultSet.
 
 ```java
-Student student = runner.query("select id, name, age, is_male, birth_day from student where id=?", 1L)
+Student student = database.query("select id, name, age, is_male, birth_day from student where id=?", 1L)
                 .map(Student.class).get();
 ```
 
@@ -57,7 +48,7 @@ Student student = runner.query("select id, name, age, is_male, birth_day from st
 The update methods execute insert/update/delete/... sqls, and return affected row num.
 
 ```java
-int deleted = runner.update("delete from student");
+int deleted = database.update("delete from student");
 ```
 
 ### Insert
@@ -65,7 +56,7 @@ int deleted = runner.update("delete from student");
 The insert methods execute insert sqls, and return auto generated keys as result set.
 
 ```java
-Long id = runner.insert(
+Long id = database.insert(
         "insert into student(name, age, is_male, birth_day) values(?,?,?,?)", name, age, true, birthDay)
         .map((p, rs) -> rs.getLong(1)).get();
 ```
@@ -74,25 +65,12 @@ Long id = runner.insert(
 
 batchInsert/batchUpdate do the same thing as insert/update, just can accept multi params and commit at once.
 
-### Named Parameters
-
-NamedSQLRunner, use name-parameter for sql clause, get parameter from map using keys or bean using property name:
-
-```java
-NamedSQLRunner runner = NamedSQLRunner.of(dataSource);
-Student student = ....;
-Long id = runner.insertBean(
-        "insert into student(name, age, is_male, birth_day) values(:name,:age,:isMale,:birthDay)", student)
-        .map((provider, rs) -> rs.getLong(1)).get();
-
-```
-
 ### Transaction
 
 With a SQLRunner instance, can start a transaction by:
 
 ```java
-TransactionContext ctx = runner.startTransaction();
+TransactionContext ctx = database.startTransaction();
 try {
     ctx.update(clause, params);
     ctx.update(clause2, params2);
@@ -106,7 +84,7 @@ try {
 or using functional style:
 
 ```java
-runner.withTransaction(ctx -> {
+database.withTransaction(ctx -> {
     ctx.update(clause, params);
     ctx.update(clause2, params2);
     return null;

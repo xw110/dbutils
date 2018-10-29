@@ -13,7 +13,7 @@ import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 
 /**
- * For reuse code across SQLRunner and TransactionContext.
+ * For reuse code across Database and TransactionContext.
  */
 abstract class SQLExecutor {
     protected abstract MyConnection supplyConnection() throws SQLException;

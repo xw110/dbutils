@@ -8,32 +8,24 @@ import java.sql.SQLException;
 import java.util.function.Function;
 
 /**
- * Parent class for all which can execute sql.
+ * Parent class for which can execute sql. As the name DataSource is already taken, we use Database as name.
  *
  * @author Liu Dong
  */
-public abstract class SQLRunner extends SQLExecutor {
+public abstract class Database extends SQLExecutor {
 
     /**
      * Create a sql runner from data source.
      */
-    public static SQLRunner of(DataSource dataSource) {
-        return new DataSourceSQLRunner(dataSource);
+    public static Database of(DataSource dataSource) {
+        return new DataSourceWrapper(dataSource);
     }
 
     /**
      * Create a sql runner, with jdbc url, using internal non-pooled data source.
      */
-    public static SQLRunner of(String jdbcUrl, String user, String password) {
-        return new DataSourceSQLRunner(SimpleDataSource.create(jdbcUrl, user, password));
-    }
-
-    /**
-     * Create a SQL Runner with one connection.
-     * The connection retrieve and close are managed by user self.
-     */
-    public static SQLRunner of(Connection connection) {
-        return new ConnectionSQLRunner(connection);
+    public static Database of(String jdbcUrl, String user, String password) {
+        return new DataSourceWrapper(SimpleDataSource.create(jdbcUrl, user, password));
     }
 
     /**
