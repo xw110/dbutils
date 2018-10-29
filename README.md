@@ -10,20 +10,19 @@ DbUtils is in maven central repo.
 <dependency>
     <groupId>net.dongliu</groupId>
     <artifactId>dbutils</artifactId>
-    <version>5.0.0</version>
+    <version>6.0.0</version>
 </dependency>
 
 ```
 
 ## Usage
 
-DbUtils can wrap a jdbc dataSource, into a Database instance, for querying or updating.
-Database can also be create from jdbcUrl too, using a simple non-pooled dataSource.
+DbUtils wrap a jdbc data source into a Database instance, for querying or updating, and mapping sql results.
+Database can also be create from jdbcUrl too, using a internal simple non-pooled dataSource.
 
 Wrapping dataSource:
 
 ```java
-Database
 DataSource dataSource = ...;
 Database database = Database.of(dataSource);
 database.query(clause)...
